@@ -1,7 +1,7 @@
 # Contributor: Jonathan Neuschäfer <j.neuschaefer@gmx.net>
 pkgname=fzy
 pkgver=0.9
-pkgrel=1
+pkgrel=2
 pkgdesc="A better fuzzy finder"
 url="https://github.com/jhawthorn/$pkgname"
 arch="all"
@@ -10,7 +10,8 @@ depends=""
 makedepends=""
 install=""
 subpackages="$pkgname-doc"
-source="$pkgname-$pkgver.tar.gz::https://github.com/jhawthorn/fzy/archive/$pkgver.tar.gz"
+source="$pkgname-$pkgver.tar.gz::https://github.com/jhawthorn/fzy/archive/$pkgver.tar.gz
+        10-exit-on-backspace.patch"
 builddir="$srcdir/$pkgname-$pkgver"
 
 build() {
@@ -30,4 +31,5 @@ package() {
 	make install PREFIX="/usr" DESTDIR="$pkgdir"
 }
 
-sha512sums="71a44bc3bbef3a2d82476a69b5c9e28753e760bbb8d453a9e44b57f34a79dd8ebcd510a869dfeae95f522ba6ccb4b8f10f79c081ce6bc6cfae9a41f4071fefc0  fzy-0.9.tar.gz"
+sha512sums="71a44bc3bbef3a2d82476a69b5c9e28753e760bbb8d453a9e44b57f34a79dd8ebcd510a869dfeae95f522ba6ccb4b8f10f79c081ce6bc6cfae9a41f4071fefc0  fzy-0.9.tar.gz
+3faefe26ddc723e310c190293f95c9f832fde5f05dae86d201583af81304bf5e7a0676c55fddc23bc000d3f74c018e8fe99c6c4ba66807302b2982253f7c6e0a  10-exit-on-backspace.patch"

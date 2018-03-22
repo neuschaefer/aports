@@ -1,0 +1,23 @@
+commit f4da5eaf003a1807ea475e27fe08605e51d6b1df
+Author: Jonathan Neuschäfer <j.neuschaefer@gmx.net>
+Date:   Sat Sep 23 17:50:26 2017 +0200
+
+    If backspace is pressed on empty input, exit
+
+diff --git a/src/tty_interface.c b/src/tty_interface.c
+index fc903e6..83b8e84 100644
+--- a/src/tty_interface.c
++++ b/src/tty_interface.c
+@@ -130,9 +130,12 @@ static void action_emit(tty_interface_t *state) {
+ 	state->exit = EXIT_SUCCESS;
+ }
+ 
++static void action_exit(tty_interface_t *state);
+ static void action_del_char(tty_interface_t *state) {
+ 	if (*state->search)
+ 		state->search[strlen(state->search) - 1] = '\0';
++	else
++		action_exit(state);
+ }
+ 
+ static void action_del_word(tty_interface_t *state) {
