@@ -31,7 +31,10 @@ ${APK:-apk} add --keys-dir "$keys_dir" --no-cache \
 	--repositories-file "$repositories_file" \
 	--no-script --root "$tmp" --initdb --arch "$arch" \
 	"$@"
-for link in $("$tmp"/bin/busybox --list-full); do
+
+# NOTE: We're asking the build machine's busybox here, instead of the one in
+# $tmp, because in cross-build situations, we can't execute that one.
+for link in $(busybox --list-full); do
 	[ -e "$tmp"/$link ] || ln -s /bin/busybox "$tmp"/$link
 done
 
