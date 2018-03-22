@@ -1,0 +1,32 @@
+# Contributor: Jonathan Neuschäfer <j.neuschaefer@gmx.net>
+# Maintainer:
+pkgname=eeprog
+pkgver=0.7.6
+pkgrel=0
+pkgdesc="I2C EEPROM programming tool"
+url="http://darkswarm.org/eeprog-0.7.6-tear5.tar.gz"
+arch="all"
+license="GPLv2+"
+options="!check"
+subpackages="$pkgname-doc"
+source="http://darkswarm.org/eeprog-0.7.6-tear5.tar.gz"
+builddir="$srcdir/eeprog-0.7.6-tear12/"
+
+# See also https://www.richud.com/wiki/Rasberry_Pi_I2C_EEPROM_Program#eeprog
+
+build() {
+	cd "$builddir"
+	make
+}
+
+package() {
+	cd "$builddir"
+
+	#mkdir -p "$pkgdir/usr/bin/"
+	#make install PREFIX="$pkgdir/usr/bin/"
+	install -D "$builddir/eeprog"  "$pkgdir/usr/bin/eeprog"
+	install -D "$builddir/README"  "$pkgdir/usr/share/doc/eeprog/README"
+	install -D "$builddir/WARNING" "$pkgdir/usr/share/doc/eeprog/WARNING"
+}
+
+sha512sums="0af134ca3299c97daa13302196ec6ef5f1cfc5e9bfa10d007f550f4e36adc2df67bd26dc0490a2212067c8547c98da195989fe9619466044663b1104eb620f58  eeprog-0.7.6-tear5.tar.gz"
