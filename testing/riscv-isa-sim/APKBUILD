@@ -1,0 +1,40 @@
+# Contributor: Jonathan Neuschäfer <j.neuschaefer@gmx.net>
+# Maintainer: Jonathan Neuschäfer <j.neuschaefer@gmx.net>
+pkgname=riscv-isa-sim
+pkgver=0.0.20171218	# FIXME: not an upstream release, just a commit from git
+real_pkgver=0185d369153b099be0c363a4ad6a52cec19b80bd
+pkgrel=0
+pkgdesc="Spike, a RISC-V ISA Simulator"
+url="https://github.com/riscv/riscv-isa-sim"
+arch="all"
+license="BSD"
+depends="libfesvr dtc"
+makedepends="libfesvr-dev"
+install=""
+options="!check"
+subpackages="$pkgname-dev"
+source="$pkgname-$pkgver.tar.gz::https://github.com/riscv/$pkgname/archive/$real_pkgver.tar.gz"
+builddir="$srcdir/$pkgname-$real_pkgver"
+
+build() {
+	cd "$builddir"
+	mkdir build
+	(cd build && ../configure --prefix=/usr)
+	make -C build
+}
+
+check() {
+	# The test suite is for now disabled because it expects a RISC-V
+	# compiler at $RISCV/bin/riscv64-unknown-elf-gcc, and we don't have
+	# RISC-V compilers in alpine.
+	#make check
+
+	true # dummy
+}
+
+package() {
+	cd "$builddir"
+	make -C build DESTDIR="$pkgdir" install
+}
+
+sha512sums="8a5cac97a4a7b470b0d8b50e173229a447f631fb45e2c71491f71056598c6f2e49e9688840b2d6dbe86e3b3111150d2b3cf9fb7da10df436b1888ecd1eb64c4d  riscv-isa-sim-0.0.20171218.tar.gz"
