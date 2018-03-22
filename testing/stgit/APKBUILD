@@ -1,0 +1,40 @@
+# Contributor: Jonathan Neuschäfer <j.neuschaefer@gmx.net>
+# Maintainer: Jonathan Neuschäfer <j.neuschaefer@gmx.net>
+pkgname=stgit
+pkgver=0.18
+pkgrel=0
+pkgdesc="Stacked Git"
+url="http://www.procode.org/stgit"
+arch="noarch"
+license="GPL2"
+depends="python2 git"
+makedepends="python2-dev git asciidoc xmlto"
+install=""
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/ctmarinas/stgit/archive/v${pkgver}.tar.gz
+        10-edit-date-test-failures.patch
+        20-print-output-of-failed-tests.patch
+        21-pass-testflags-to-test-py.patch
+        30-what.patch"
+builddir="$srcdir/$pkgname-$pkgver"
+
+build() {
+	cd "$builddir"
+	make PYTHON=python2 all doc
+}
+
+check() {
+	cd "$builddir"
+	make PYTHON=python2 test TESTFLAGS=--print-output
+}
+
+package() {
+	cd "$builddir"
+	make PYTHON=python2 DESTDIR="$pkgdir" prefix=/usr install install-doc
+}
+
+sha512sums="5820cc1a8cdd5183fbe309b4b80568098844ff57934c75a43263b5cfcdac4b64e015abc9ed6a53dd856236d76bd0ebeec31e87561bca0d0d82a6e5ec7a10745f  stgit-0.18.tar.gz
+1d553b128e55e3de475f3a464a12d795a0c9286395e1e04f5273564295a9bbabf086e42ff1601fd69e91bd7e3ad81670a00f146abae1852632854139f6dd8390  10-edit-date-test-failures.patch
+8bc83cd7f4da526aadc7db291ae616b396279a906f42eca522b5a3f0e1f0e2be15ebb590d6f02a76b02acf7e3c06cadd4c312b612caa56fa42848d7318124cdf  20-print-output-of-failed-tests.patch
+0a1162dae3b7531b5da91a637ce0df766090db7a56824af8774291d2546cda3d621701d9fbae1e3d20f293ab0be4e7001a0199861aec60a037b24e1e834e9c3b  21-pass-testflags-to-test-py.patch
+55728179fbdabbb09a47fdda32e77550adeaf8a6d47c9bf0f993d2d36a24a671dc1d61f2120dc1856e0fe858afe022b0dd9b26905d49920dcaef92acaa3814f1  30-what.patch"
