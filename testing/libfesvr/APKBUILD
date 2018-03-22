@@ -1,0 +1,31 @@
+# Contributor: Jonathan Neuschäfer <j.neuschaefer@gmx.net>
+# Maintainer: Jonathan Neuschäfer <j.neuschaefer@gmx.net>
+pkgname=libfesvr
+pkgver=0.0.20171212	# FIXME: not an upstream release, just a commit from git
+real_pkgver=5fc1f58fba0c740ceffa353588acf44c62ccdfbc
+pkgrel=0
+pkgdesc="RISC-V frontend server library"
+url="https://github.com/riscv/riscv-fesvr"
+arch="all"
+license="BSD"
+depends=""
+makedepends=""
+install=""
+options="!check"
+subpackages="$pkgname-dev"
+source="$pkgname-$pkgver.tar.gz::https://github.com/riscv/riscv-fesvr/archive/$real_pkgver.tar.gz"
+builddir="$srcdir/riscv-fesvr-$real_pkgver/build"
+
+build() {
+	mkdir -p "$builddir"
+	cd "$builddir"
+	../configure --prefix=/usr
+	make
+}
+
+package() {
+	cd "$builddir"
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="cc7486de76876970ecc9adb97f8c54dcf65f37b52d32a3e6277aececdc2af3a6e9c43cd544fa52bbfe511c3fd3535a071117877f8ab9803a3e6c583cf0a9e886  libfesvr-0.0.20171212.tar.gz"
