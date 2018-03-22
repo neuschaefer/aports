@@ -1,0 +1,30 @@
+commit 27ee7415d7c34a3a7991b115c360d3fe44e599df
+Author: Jonathan Neuschäfer <j.neuschaefer@gmx.net>
+Date:   Tue Sep 19 01:42:38 2017 +0200
+
+    uart: Fix devicetree syntax for reg-shift
+    
+    I got the devicetree syntax for integers wrong, and didn't properly test
+    it. Because of this spike failed with this cryptic error:
+    
+    > Error: <stdin>:44.19-20 syntax error
+    > FATAL ERROR: Unable to parse input tree
+    > Child dtb process failed
+    
+    This commit fixes it.
+    
+    Signed-off-by: Jonathan Neuschäfer <j.neuschaefer@gmx.net>
+
+diff --git a/riscv/sim.cc b/riscv/sim.cc
+index 9c4b8e0..d52c2b0 100644
+--- a/riscv/sim.cc
++++ b/riscv/sim.cc
+@@ -309,7 +309,7 @@ void sim_t::make_dtb()
+          "      compatible = \"serial\";\n"
+          "      reg = <0x" << (uartbs >> 32) << " 0x" << (uartbs & (uint32_t)-1) <<
+                      " 0x" << (uartsz >> 32) << " 0x" << (uartsz & (uint32_t)-1) << ">;\n"
+-         "      reg-shift = 0;\n"
++         "      reg-shift = <0>;\n"
+          // TODO: interrupts = <...>;
+          // TODO: clock-frequency or clocks
+          "    };\n"

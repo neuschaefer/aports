@@ -1,0 +1,167 @@
+commit 21318d0f8a28d9639e6400c7de4eb78d6d82fef6
+Author: Jonathan Neuschäfer <j.neuschaefer@gmx.net>
+Date:   Tue Sep 19 01:42:38 2017 +0200
+
+    Implement a minimal MMIO 8250 UART
+    
+    Using the HTIF in coreboot is inconvenent, because it requires
+    defining two special ELF symbols (tohost and fromhost), and coreboot
+    doesn't natively compile to an ELF file, but rather a raw ROM image.
+    
+    I tested this patch against coreboot's driver for memory-mapped
+    8250-compatible UARTs, but most features are missing:
+    
+     - Any writes to other registers than the first one are silently
+       discarded. This includes the scratch register and the
+       interrupt-enable register.
+     - Non-byte sized accesses are not supported.
+     - The FIFO isn't emulated. Instead every written byte is immediately
+       printed on stdout, and the line status register always indicates that
+       new bytes can be sent.
+     - Input doesn't work, either, but it's added in the following patch.
+
+diff --git a/riscv/devices.h b/riscv/devices.h
+index e4df6c9..781e685 100644
+--- a/riscv/devices.h
++++ b/riscv/devices.h
+@@ -74,4 +74,11 @@ class clint_t : public abstract_device_t {
+   std::vector<mtimecmp_t> mtimecmp;
+ };
+ 
++class uart_t : public abstract_device_t {
++ public:
++  bool load(reg_t addr, size_t len, uint8_t* bytes);
++  bool store(reg_t addr, size_t len, const uint8_t* bytes);
++  size_t size() { return UART_SIZE; }
++};
++
+ #endif
+diff --git a/riscv/encoding.h b/riscv/encoding.h
+index 8ec1345..2be3680 100644
+--- a/riscv/encoding.h
++++ b/riscv/encoding.h
+@@ -153,6 +153,8 @@
+ #define DEFAULT_RSTVEC     0x00001000
+ #define CLINT_BASE         0x02000000
+ #define CLINT_SIZE         0x000c0000
++#define UART_BASE          0x02100000
++#define UART_SIZE          0x00000008
+ #define EXT_IO_BASE        0x40000000
+ #define DRAM_BASE          0x80000000
+ 
+diff --git a/riscv/riscv.mk.in b/riscv/riscv.mk.in
+index 05e316a..aa04754 100644
+--- a/riscv/riscv.mk.in
++++ b/riscv/riscv.mk.in
+@@ -46,6 +46,7 @@ riscv_srcs = \
+ 	devices.cc \
+ 	rom.cc \
+ 	clint.cc \
++	uart.cc \
+ 	debug_module.cc \
+ 	remote_bitbang.cc \
+ 	jtag_dtm.cc \
+diff --git a/riscv/sim.cc b/riscv/sim.cc
+index 647cc46..9c4b8e0 100644
+--- a/riscv/sim.cc
++++ b/riscv/sim.cc
+@@ -45,6 +45,8 @@ sim_t::sim_t(const char* isa, size_t nprocs, bool halted, reg_t start_pc,
+ 
+   clint.reset(new clint_t(procs));
+   bus.add_device(CLINT_BASE, clint.get());
++  uart.reset(new uart_t());
++  bus.add_device(UART_BASE, uart.get());
+ }
+ 
+ sim_t::~sim_t()
+@@ -298,6 +300,18 @@ void sim_t::make_dtb()
+   s << std::hex << ">;\n"
+          "      reg = <0x" << (clintbs >> 32) << " 0x" << (clintbs & (uint32_t)-1) <<
+                      " 0x" << (clintsz >> 32) << " 0x" << (clintsz & (uint32_t)-1) << ">;\n"
++         "    };\n";
++
++  reg_t uartbs = UART_BASE;
++  reg_t uartsz = UART_SIZE;
++  s << std::hex <<
++         "    uart@" << UART_BASE << " {\n"
++         "      compatible = \"serial\";\n"
++         "      reg = <0x" << (uartbs >> 32) << " 0x" << (uartbs & (uint32_t)-1) <<
++                     " 0x" << (uartsz >> 32) << " 0x" << (uartsz & (uint32_t)-1) << ">;\n"
++         "      reg-shift = 0;\n"
++         // TODO: interrupts = <...>;
++         // TODO: clock-frequency or clocks
+          "    };\n"
+          "  };\n"
+          "};\n";
+diff --git a/riscv/sim.h b/riscv/sim.h
+index 9372cc1..df9c97b 100644
+--- a/riscv/sim.h
++++ b/riscv/sim.h
+@@ -47,6 +47,7 @@ private:
+   std::string dts;
+   std::unique_ptr<rom_device_t> boot_rom;
+   std::unique_ptr<clint_t> clint;
++  std::unique_ptr<uart_t> uart;
+   bus_t bus;
+ 
+   processor_t* get_core(const std::string& i);
+diff --git a/riscv/uart.cc b/riscv/uart.cc
+new file mode 100644
+index 0000000..8cfb2eb
+--- /dev/null
++++ b/riscv/uart.cc
+@@ -0,0 +1,54 @@
++/* This file implements a minimal 8250 UART block. */
++#include "devices.h"
++#include "processor.h"
++#include <unistd.h>
++
++enum {
++  UART_DATA = 0,                  /* Data RX/TX */
++  UART_INTR_EN,                   /* Interrupt enable */
++  UART_INTR_ID,                   /* Interrupt identification */
++  UART_LINE_CTL,                  /* Line control */
++  UART_MODEM_CTL,                 /* Modem control */
++  UART_LINE_STAT,                 /* Line status */
++  UART_MODEM_STAT,                /* Modem status */
++  UART_SCRATCH                    /* Scratch register */
++};
++
++enum {
++  UART_LINE_STAT_THRE = (1 << 5), /* Transmitter holding register empty */
++  UART_LINE_STAT_TEMT = (1 << 6), /* Transmitter completely empty */
++};
++
++bool uart_t::load(reg_t addr, size_t len, uint8_t* bytes)
++{
++  /* For simplicity on our side, only support byte-sized accesses for now. */
++  if (len > 1)
++    return false;
++
++  switch (addr)
++  {
++    case UART_LINE_STAT:
++      *bytes = UART_LINE_STAT_TEMT | UART_LINE_STAT_THRE;
++      break;
++    default:
++      *bytes = 0;
++  }
++
++  return true;
++}
++
++bool uart_t::store(reg_t addr, size_t len, const uint8_t* bytes)
++{
++  if (len > 1)
++    return false;
++
++  switch (addr)
++  {
++    case UART_DATA:
++      putchar(*bytes);
++      fflush(stdout);
++      break;
++  }
++
++  return true;
++}

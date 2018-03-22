@@ -1,0 +1,67 @@
+commit 6fef6c46273a4aad788ce54f284601d32b68953a
+Author: Ronald G. Minnich <rminnich@gmail.com>
+Date:   Tue Sep 19 01:42:38 2017 +0200
+
+    uart: add uart input support
+    
+    This lets you do in, as well as out.
+    
+    Signed-off-by: Ronald G. Minnich <rminnich@gmail.com>
+    Signed-off-by: Jonathan Neuschäfer <j.neuschaefer@gmx.net>
+
+diff --git a/riscv/processor.cc b/riscv/processor.cc
+index 1e3573d..42583e3 100644
+--- a/riscv/processor.cc
++++ b/riscv/processor.cc
+@@ -304,6 +304,7 @@ void processor_t::set_csr(int which, reg_t val)
+   val = zext_xlen(val);
+   reg_t delegable_ints = MIP_SSIP | MIP_STIP | MIP_SEIP | (1 << IRQ_COP);
+   reg_t all_ints = delegable_ints | MIP_MSIP | MIP_MTIP;
++  //std::cout << "set_csr " << (uint64_t)which << " to " << (uint64_t) val << "\n";
+   switch (which)
+   {
+     case CSR_FFLAGS:
+diff --git a/riscv/uart.cc b/riscv/uart.cc
+index 8cfb2eb..2fc4c9c 100644
+--- a/riscv/uart.cc
++++ b/riscv/uart.cc
+@@ -2,6 +2,7 @@
+ #include "devices.h"
+ #include "processor.h"
+ #include <unistd.h>
++#include <sys/ioctl.h>
+ 
+ enum {
+   UART_DATA = 0,                  /* Data RX/TX */
+@@ -15,12 +16,16 @@ enum {
+ };
+ 
+ enum {
++  UART_LINE_STAT_DR = (1 << 0), /* Data ready */
+   UART_LINE_STAT_THRE = (1 << 5), /* Transmitter holding register empty */
+   UART_LINE_STAT_TEMT = (1 << 6), /* Transmitter completely empty */
+ };
+ 
+ bool uart_t::load(reg_t addr, size_t len, uint8_t* bytes)
+ {
++  int amt;
++  char c;
++
+   /* For simplicity on our side, only support byte-sized accesses for now. */
+   if (len > 1)
+     return false;
+@@ -29,6 +34,14 @@ bool uart_t::load(reg_t addr, size_t len, uint8_t* bytes)
+   {
+     case UART_LINE_STAT:
+       *bytes = UART_LINE_STAT_TEMT | UART_LINE_STAT_THRE;
++      if ((ioctl(0, FIONREAD, &amt) == 0) && (amt > 0))
++        *bytes |= UART_LINE_STAT_DR;
++      break;
++    case UART_DATA:
++      *bytes = 0;
++      if ((ioctl(0, FIONREAD, &amt) == 0) && (amt > 0))
++        if (read(0, bytes, 1))
++          ; // Not much point in a warning but C++ demands something.
+       break;
+     default:
+       *bytes = 0;

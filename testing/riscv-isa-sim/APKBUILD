@@ -13,7 +13,10 @@ makedepends="libfesvr-dev"
 install=""
 options="!check"
 subpackages="$pkgname-dev"
-source="$pkgname-$pkgver.tar.gz::https://github.com/riscv/$pkgname/archive/$real_pkgver.tar.gz"
+source="$pkgname-$pkgver.tar.gz::https://github.com/riscv/$pkgname/archive/$real_pkgver.tar.gz
+        10-uart.patch
+        11-uart-input.patch
+        12-uart-devicetree-fix.patch"
 builddir="$srcdir/$pkgname-$real_pkgver"
 
 build() {
@@ -37,4 +40,7 @@ package() {
 	make -C build DESTDIR="$pkgdir" install
 }
 
-sha512sums="8a5cac97a4a7b470b0d8b50e173229a447f631fb45e2c71491f71056598c6f2e49e9688840b2d6dbe86e3b3111150d2b3cf9fb7da10df436b1888ecd1eb64c4d  riscv-isa-sim-0.0.20171218.tar.gz"
+sha512sums="8a5cac97a4a7b470b0d8b50e173229a447f631fb45e2c71491f71056598c6f2e49e9688840b2d6dbe86e3b3111150d2b3cf9fb7da10df436b1888ecd1eb64c4d  riscv-isa-sim-0.0.20171218.tar.gz
+ad5526bc8a0fc0f1550ebe30e91fd5dde7ef3c894cc74df005fd84f191d6328ed7b328bf84b7343685dd7a97112b57698f4d5ed96ec82d40d51d44515933f2a2  10-uart.patch
+a848e1665254333eb75b705235a94d911b92a8ed6d4742456ba358423b48c9d8d5949bd98fa1a53e39428f7b12ee546be65b46ea6f0b9adcfffcfca3ea58f9a9  11-uart-input.patch
+0069a588343609ea9072ea5bb28e4ef2202e06e25c230d36c27fdf60b24156491fc478e3dccf1d67427f06aca18d606912909445b0ead4af4d1e3401fb290d09  12-uart-devicetree-fix.patch"
