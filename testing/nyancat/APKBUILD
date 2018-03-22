@@ -1,0 +1,32 @@
+# Contributor: Jonathan Neuschäfer <j.neuschaefer@gmx.net>
+# Maintainer: Jonathan Neuschäfer <j.neuschaefer@gmx.net>
+pkgname=nyancat
+pkgver=1.5.1
+pkgrel=0
+pkgdesc="Nyancat rendered in your terminal"
+url="https://github.com/klange/$pkgname"
+arch="all"
+license="NCSA"
+depends=""
+makedepends=""
+install=""
+options="!check"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/klange/$pkgname/archive/$pkgver.tar.gz
+        0000-Fix-buffer-overflow.patch"
+builddir="$srcdir/$pkgname-$pkgver"
+
+build() {
+	cd "$builddir"
+	make
+	gzip -9 nyancat.1
+}
+
+package() {
+	cd "$builddir"
+	install -Dm755 src/nyancat "$pkgdir/usr/bin/nyancat"
+	install -Dm644 nyancat.1.gz "$pkgdir/usr/share/man/man1/nyancat.1.gz"
+}
+
+sha512sums="0a45bd0b1a9b9f85650a986c7f9f8120441f6b0bd346281fb44a5470382484738e660dffe17b95088332c50b6aed3feb4b2f949f15f37dd9c1b1885f345e157d  nyancat-1.5.1.tar.gz
+4032919ebaa8138f3dc8a0d94dd9d80acfacf7ee5cee5c7669101c4b30356c750d844e09773d4a800217c7195c7ac87ebffe53d0362e5263ef18901118ca54d5  0000-Fix-buffer-overflow.patch"
