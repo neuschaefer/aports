@@ -1,0 +1,47 @@
+commit 6981f3a6ae1cab387dd4273e3483a07d932d827f
+Author: Oliver Smith <ollieparanoid@bitmessage.ch>
+Date:   Tue Jan 30 22:29:54 2018 +0100
+
+    abuild: Change -f (force) to not ignore checksums/init scripts
+    
+    The force flag used to skip the following functions, without any
+    documentation in the help (-h) output:
+    
+      * verify (checksum verification)
+      * initdcheck (check if the init scripts are openrc scripts)
+      * check_arch (check if the target architecture is in "arch=")
+      * check_libc (check if the target libc is masked in the options)
+    
+    This was counter-intuitive and could even be dangerous (when one relies
+    on the checksum verification to prevent man-in-the-middle attacks, but
+    always uses the -f flag).
+    
+    With this commit, it only skips check_arch and check_libc besides the
+    package up to date check and the help output mentions this.
+
+diff --git a/abuild.in b/abuild.in
+index 692e5c0..f6b6f90 100644
+--- a/abuild.in
++++ b/abuild.in
+@@ -421,10 +421,8 @@ initdcheck() {
+ # unpack the sources
+ default_unpack() {
+ 	local u
+-	if [ -z "$force" ]; then
+-		verify || return 1
+-		initdcheck || return 1
+-	fi
++	verify || return 1
++	initdcheck || return 1
+ 	mkdir -p "$srcdir"
+ 	for u in $source; do
+ 		local s
+@@ -2424,7 +2422,7 @@ usage() {
+ 		 -c  Enable colored output
+ 		 -d  Disable dependency checking
+ 		 -D  Set APKINDEX description (default: \$repo \$(git describe))
+-		 -f  Force specified cmd, even if they are already done
++		 -f  Force specified cmd (skip checks: apk up to date, arch, libc)
+ 		 -F  Force run as root
+ 		 -h  Show this help
+ 		 -i  Install PKG after successful build
