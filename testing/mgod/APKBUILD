@@ -1,0 +1,28 @@
+# Contributor: Jonathan Neuschäfer <j.neuschaefer@gmx.net>
+# Maintainer: Jonathan Neuschäfer <j.neuschaefer@gmx.net>
+pkgname=mgod
+pkgver=1.1
+pkgrel=0
+pkgdesc="a mini gopher server for inetd"
+url="http://port70.net/?1mgod"
+arch="all"
+license="GPL-3.0-only"
+depends=""
+makedepends=""
+install=""
+options="!check"
+subpackages="$pkgname-doc"
+source="http://port70.net/?9mgod/$pkgname-$pkgver.tar.gz"
+
+build() {
+	cd "$builddir"
+	make mgod
+}
+
+package() {
+	cd "$builddir"
+	install -Dm755 mgod "$pkgdir/usr/bin/mgod"
+	install -Dm644 README "$pkgdir/usr/share/doc/$pkgname/README"
+}
+
+sha512sums="d506e9cc7bb940cbb1e5fc893dd1cdf1f9177b4328a7018a4e7decfac3ed6734285a9be4f4b46a31aa7d13639bddee25bbd0e750a51ce3a8489e7a97cfd1fb67  mgod-1.1.tar.gz"
