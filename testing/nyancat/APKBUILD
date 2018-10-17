@@ -1,0 +1,30 @@
+# Contributor: Jonathan Neuschäfer <j.neuschaefer@gmx.net>
+# Maintainer: Jonathan Neuschäfer <j.neuschaefer@gmx.net>
+pkgname=nyancat
+pkgver=1.5.2
+pkgrel=0
+pkgdesc="Nyancat rendered in your terminal"
+url="https://github.com/klange/$pkgname"
+arch="all"
+license="NCSA"
+depends=""
+makedepends=""
+install=""
+options="!check"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/klange/$pkgname/archive/$pkgver.tar.gz"
+builddir="$srcdir/$pkgname-$pkgver"
+
+build() {
+	cd "$builddir"
+	make
+	gzip -9 nyancat.1
+}
+
+package() {
+	cd "$builddir"
+	install -Dm755 src/nyancat "$pkgdir/usr/bin/nyancat"
+	install -Dm644 nyancat.1.gz "$pkgdir/usr/share/man/man1/nyancat.1.gz"
+}
+
+sha512sums="8eee5da8afacdbe8b6b5f66686c101d42da26ef6c172e6b43b6042e1bacf7dfb5668e006cbbe675aca523b567eea57404af5b5bb6d654d137951e06c9a75463a  nyancat-1.5.2.tar.gz"
